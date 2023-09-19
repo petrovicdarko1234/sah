@@ -34,6 +34,7 @@ class Piece {
 
 let _selected: Piece | null = null
 let pieceMatrix: Piece[][] = []
+let _newQueen = false
 function drawBoard() {
     let board = document.getElementById('Board')
     if (board == null) {
@@ -93,20 +94,38 @@ function drawPieces() {
 }
 
 function onClick(clicked: Piece) {
+    let canMove = false
+    let target = null
     if (_selected == null) {
         if (clicked.img.src != "") {
             _selected = clicked
             _selected.img.classList.add("selected")
         }
     } else {
-        let target = clicked
+        target = clicked
         switch (_selected.rank) {
             case "pawn":
-                handlePawn(_selected, target)
+                canMove = handlePawn(_selected, target)
+                if (_newQueen) {
+                    if (_selected.white) {
+                        target.setSrc("pieces/white/queen.svg")
+                        _selected.img.removeAttribute("src")
+                        _newQueen = false
+                    } else {
+                        target.setSrc("pieces/black/queen.svg")
+                        _selected.img.removeAttribute("src")
+                        _newQueen = false
+                    }
+                }
+                else if (canMove) {
+                    makeMove(target)
+                }
                 break
             case "rook":
-                //code
-
+                canMove = handleRook(_selected, target)
+                if (canMove) {
+                    makeMove(target)
+                }
                 break
             case "knight":
                 //code
@@ -120,16 +139,114 @@ function onClick(clicked: Piece) {
             case "king":
                 //code
                 break
+
         }
-        target.img.src = _selected.img.src
-        _selected.img.removeAttribute("src")
         _selected.img.classList.remove("selected")
         _selected = null
+        canMove = false
+    }
+}
+function makeMove(p: Piece) {
+    if (_selected != null) {
+        let target = p
+        if (target == _selected) {
+            return
+        }
+        target.img.src = _selected.img.src
+        target.rank = _selected.rank
+        _selected.rank = ""
+        target.white = _selected.white
+        _selected.white = false
+        _selected.img.removeAttribute("src")
     }
 }
 
-function handlePawn(_selected: Piece, target: Piece) {
+function handlePawn(_selected: Piece, t: Piece): boolean {
+    let target = t
+    let selected = _selected
 
+    let piece = "white/queen.svg"
+    let queenRes = 0
+    let startI = 6
+    let offsetI = -1
+    if (!selected.white) {
+        offsetI = 1
+        startI = 1
+        queenRes = 7
+        piece = "black/queen.svg"
+    }
+    //move
+    if (target.img.src == "") {
+        if (selected.i == startI && selected.i + 2 * offsetI == target.i && selected.j == target.j) {
+            return true
+        }
+        if (selected.i + offsetI == target.i && selected.j == target.j) {
+            if (target.i == queenRes && selected.white) {
+                _newQueen = true
+            }
+            return true
+        }
+
+    } else { //take
+        if (selected.white == target.white) {
+            return false
+        }
+        if (selected.i + offsetI == target.i && selected.j + 1 == target.j) {
+            if (target.i == queenRes) {
+                _newQueen = true
+            }
+            return true
+        }
+        if (selected.i + offsetI == target.i && selected.j - 1 == target.j) {
+            if (target.i == queenRes) {
+                _newQueen = true
+            }
+            return true
+        }
+    }
+    return false
+}
+function handleRook(_selected: Piece, t: Piece): boolean {
+    let selected = _selected
+    let target = t
+
+    if (target.rank != "" && selected.white == target.white) {
+        return false
+    }
+
+    let difI = selected.i - target.i
+    let difJ = selected.j - target.j
+
+    let offsetI = 0
+    let offsetJ = 0
+
+    if (difI > 0) {
+        offsetI = 1
+        offsetJ = 0
+    } else if (difI < 0) {
+        offsetI = -1
+        offsetJ = 0
+    } else if (difJ > 0) {
+        offsetI = 0
+        offsetJ = 1
+    } else if (difJ < 0) {
+        offsetI = 0
+        offsetJ = -1
+    }
+    while (true) {
+        selected.i = selected.i + offsetI
+        selected.j = selected.j + offsetJ
+
+        if (selected.i == target.i && selected.j == target.j) {
+            break
+        }
+    }
+
+    if (selected.i == target.i || selected.j == target.j) {
+        return true
+    }
+
+    return false
 }
 
 //podesi sliku
