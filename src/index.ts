@@ -123,7 +123,7 @@ function onClick(clicked: Piece) {
                 }
                 break
             case "rook":
-                canMove = handleRook(_selected, target)
+                canMove = handleRook(_selected, target, _pieceMatrix)
                 break
             case "knight":
                 //code
@@ -193,9 +193,8 @@ function handlePawn(select: Piece, target: Piece): boolean {
     }
     return false
 }
-function handleRook(_selected: Piece, t: Piece): boolean {
-    let selected = _selected
-    let target = t
+function handleRook(selected: Piece, target: Piece, matrix: Piece[][]): boolean {
+
 
     if (target.rank != "" && selected.white == target.white) {
         return false
@@ -208,31 +207,48 @@ function handleRook(_selected: Piece, t: Piece): boolean {
     let offsetJ = 0
 
     if (difI > 0) {
-        offsetI = 1
+        offsetI = -1
         offsetJ = 0
     } else if (difI < 0) {
-        offsetI = -1
+        offsetI = 1
         offsetJ = 0
     } else if (difJ > 0) {
         offsetI = 0
-        offsetJ = 1
+        offsetJ = -1
     } else if (difJ < 0) {
         offsetI = 0
-        offsetJ = -1
+        offsetJ = 1
     }
+    let curI = selected.i
+    let curJ = selected.j
     while (true) {
-        selected.i = selected.i + offsetI
-        selected.j = selected.j + offsetJ
+        curI = curI + offsetI
+        curJ = curJ + offsetJ
 
-        if (selected.i == target.i && selected.j == target.j) {
+        if (curJ > 7 || curJ < 0) {
+            console.log("I je:", curI, "J je:", curJ)
             break
         }
+        if (curI > 7 || curI < 0) {
+            console.log("I je:", curI, "J je:", curJ)
+            break
+        }
+        if (curI == target.i && curJ == target.j) {
+            break
+        }
+        if (matrix[curI][curJ].rank != "") {
+            console.log("puca na poziciji:", matrix[curI][curJ])
+            console.log(target)
+            console.log(selected)
+            return false
+        }
+
     }
 
     if (selected.i == target.i || selected.j == target.j) {
         return true
     }
-
+    console.log(selected.i, selected.j, "razmak", target.i, target.j)
     return false
 }
 
