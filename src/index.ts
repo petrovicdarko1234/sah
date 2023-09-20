@@ -204,7 +204,7 @@ function handleRook(selected: Piece, target: Piece, matrix: Piece[][]): boolean 
     let difI = selected.i - target.i
     let difJ = selected.j - target.j
 
-    if (selected.rank = "king") {
+    if (selected.rank == "king") {
         if (Math.abs(selected.i - target.i) > 1 || Math.abs(selected.j - target.j) > 1) {
             console.log("uslov za kralja kod topovu funkciju")
             return false
@@ -263,7 +263,7 @@ function handleBishop(selected: Piece, target: Piece, matrix: Piece[][]): boolea
         return false
     }
 
-    if (selected.rank = "king") {
+    if (selected.rank == "king") {
         if (Math.abs(selected.i - target.i) != 1 || Math.abs(selected.j - target.j) != 1) {
             return false
         }
