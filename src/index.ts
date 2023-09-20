@@ -128,17 +128,16 @@ function onClick(clicked: Piece) {
                 canMove = handleRook(_selected, target, _pieceMatrix)
                 break
             case "knight":
-                //code
+                canMove = handleKnight(_selected, target)
                 break
             case "bishop":
                 canMove = handleBishop(_selected, target, _pieceMatrix)
                 break
             case "queen":
                 canMove = (handleBishop(_selected, target, _pieceMatrix) || handleRook(_selected, target, _pieceMatrix))
-
                 break
             case "king":
-                //code
+                canMove = (handleBishop(_selected, target, _pieceMatrix) || handleRook(_selected, target, _pieceMatrix))
                 break
 
         }
@@ -173,7 +172,6 @@ function handlePawn(select: Piece, target: Piece): boolean {
         offsetI = 1
         startI = 1
     }
-
     //move
     if (target.img.src == "") {
         if (select.i == startI && select.i + 2 * offsetI == target.i && select.j == target.j) {
@@ -206,6 +204,13 @@ function handleRook(selected: Piece, target: Piece, matrix: Piece[][]): boolean 
     let difI = selected.i - target.i
     let difJ = selected.j - target.j
 
+    if (selected.rank = "king") {
+        if (Math.abs(selected.i - target.i) > 1 || Math.abs(selected.j - target.j) > 1) {
+            console.log("uslov za kralja kod topovu funkciju")
+            return false
+        }
+    }
+
     let offsetI = 0
     let offsetJ = 0
 
@@ -229,25 +234,24 @@ function handleRook(selected: Piece, target: Piece, matrix: Piece[][]): boolean 
         curJ = curJ + offsetJ
 
         if (curJ > 7 || curJ < 0) {
-            console.log("problem s J se desio")
             break
         }
         if (curI > 7 || curI < 0) {
-            console.log("problem s I se desio")
             break
         }
         if (curI == target.i && curJ == target.j) {
             break
         }
         if (matrix[curI][curJ].rank != "") {
+            console.log("ima nesto ispred kod topa")
             return false
         }
-
     }
 
     if (selected.i == target.i || selected.j == target.j) {
         return true
     }
+    console.log("kraj od topovu funkciju")
     return false
 }
 
@@ -257,6 +261,12 @@ function handleBishop(selected: Piece, target: Piece, matrix: Piece[][]): boolea
 
     if (target.rank != "" && selected.white == target.white) {
         return false
+    }
+
+    if (selected.rank = "king") {
+        if (Math.abs(selected.i - target.i) != 1 || Math.abs(selected.j - target.j) != 1) {
+            return false
+        }
     }
 
     let offsetI = 0
@@ -305,17 +315,16 @@ function handleBishop(selected: Piece, target: Piece, matrix: Piece[][]): boolea
     }
     return false
 }
+function handleKnight(selected: Piece, target: Piece): boolean {
+    let difI = Math.abs(selected.i - target.i)
+    let difJ = Math.abs(selected.j - target.j)
 
-//podesi sliku
-/*   let img = document.createElement("img")
-img.src = "path_to_svg"*/
+    if (target.rank != "" && selected.white == target.white) {
+        return false
+    }
 
-//ukloni sliku
-// select.img.removeAttribute("src")
-//postavi nov
-//select.img.src = "path to src"
-
-//on cick
-//   img.addEventListener("click", (ev: Event) => {
-//  console.log("click:", img.id)
-//})
+    if ((difI == 2 && difJ == 1) || (difI == 1 && difJ == 2)) {
+        return true
+    }
+    return false
+}
