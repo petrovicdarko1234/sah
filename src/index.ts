@@ -13,9 +13,7 @@ class Piece {
     }
     setSrc(source: string) {
         this.img.src = source
-        if (source.includes("white")) {
-            this.white = true
-        }
+        this.white = source.includes("white")
         if (source.includes("king")) {
             this.rank = "king"
         } else if (source.includes("queen")) {
@@ -34,6 +32,8 @@ class Piece {
 let pieces = ["rook", "knight", "bishop", "king", "queen", "bishop", "knight", "rook"]
 let _selected: Piece | null = null
 let _pieceMatrix: Piece[][] = []
+const captureAudio = new Audio("capture.mp3")
+const moveAudio = new Audio("move-self.mp3")
 let _whiteToMove = true
 
 function drawBoard() {
@@ -87,19 +87,25 @@ function onClick(clicked: Piece) {
     let canMove = false
     let target = null
     if (_selected == null) {
-        if (clicked.img.src != "") {
-            _selected = clicked
-            _selected.img.classList.add("selected")
+        if (_whiteToMove != clicked.white) {
+            return
         }
-    } else {
+        else {
+            if (clicked.img.src != "") {
+                _selected = clicked
+                _selected.img.classList.add("selected")
+            }
+        }
+    }
+    else {
         target = clicked
         switch (_selected.rank) {
             case "pawn":
                 canMove = handlePawn(_selected, target, _pieceMatrix)
                 if (canMove) {
-                    //handle queen res
                     let queen = "pieces/white/queen.svg"
                     let queenRes = 0
+
                     if (!_selected.white) {
                         queenRes = 7
                         queen = "pieces/black/queen.svg"
@@ -109,8 +115,10 @@ function onClick(clicked: Piece) {
                         target.setSrc(queen)
                         _selected.img.removeAttribute("src")
                         _selected.rank = ""
-                        _selected.white = false
                         canMove = false
+                        resetAudio()
+                        captureAudio.play()
+                        _whiteToMove = !_whiteToMove
                     }
                 }
                 break
@@ -133,6 +141,7 @@ function onClick(clicked: Piece) {
 
         if (canMove) {
             makeMove(target)
+            _whiteToMove = !_whiteToMove
         }
         _selected.img.classList.remove("selected")
         _selected = null
@@ -145,18 +154,19 @@ function makeMove(p: Piece) {
         if (target == _selected) {
             return
         }
-        if (_whiteToMove == _selected.white) {
-
-            target.img.src = _selected.img.src
-            target.rank = _selected.rank
-            _selected.rank = ""
-            target.white = _selected.white
-            _selected.white = false
-            _selected.img.removeAttribute("src")
-            _whiteToMove = !_whiteToMove
+        if (target.rank == "") {
+            resetAudio()
+            moveAudio.play()
         } else {
-            console.log("Not your turn")
+            resetAudio()
+            captureAudio.play()
         }
+        target.img.src = _selected.img.src
+        target.rank = _selected.rank
+        _selected.rank = ""
+        target.white = _selected.white
+        _selected.white = false
+        _selected.img.removeAttribute("src")
     }
 }
 
@@ -324,4 +334,10 @@ function handleKnight(selected: Piece, target: Piece): boolean {
         return true
     }
     return false
+}
+function resetAudio() {
+    moveAudio.pause();
+    moveAudio.currentTime = 0;
+    captureAudio.pause();
+    captureAudio.currentTime = 0;
 }
