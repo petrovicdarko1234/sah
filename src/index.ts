@@ -31,9 +31,10 @@ class Piece {
         }
     }
 }
-
+let pieces = ["rook", "knight", "bishop", "king", "queen", "bishop", "knight", "rook"]
 let _selected: Piece | null = null
 let _pieceMatrix: Piece[][] = []
+let _whiteToMove = true
 
 function drawBoard() {
     let board = document.getElementById('Board')
@@ -59,7 +60,7 @@ function drawBoard() {
         }
     }
     drawPawns()
-    drawPieces()
+    drawPieces(pieces)
 }
 
 function drawPawns() {
@@ -71,26 +72,15 @@ function drawPawns() {
         _pieceMatrix[blackI][j].setSrc("pieces/black/pawn.svg")
     }
 }
-function drawPieces() {
-    //black
-    _pieceMatrix[0][0].setSrc("pieces/black/rook.svg")
-    _pieceMatrix[0][1].setSrc("pieces/black/knight.svg")
-    _pieceMatrix[0][2].setSrc("pieces/black/bishop.svg")
-    _pieceMatrix[0][3].setSrc("pieces/black/king.svg")
-    _pieceMatrix[0][4].setSrc("pieces/black/queen.svg")
-    _pieceMatrix[0][5].setSrc("pieces/black/bishop.svg")
-    _pieceMatrix[0][6].setSrc("pieces/black/knight.svg")
-    _pieceMatrix[0][7].setSrc("pieces/black/rook.svg")
+function drawPieces(pieces: string[]) {
 
-    //white
-    _pieceMatrix[7][0].setSrc("pieces/white/rook.svg")
-    _pieceMatrix[7][1].setSrc("pieces/white/knight.svg")
-    _pieceMatrix[7][2].setSrc("pieces/white/bishop.svg")
-    _pieceMatrix[7][3].setSrc("pieces/white/king.svg")
-    _pieceMatrix[7][4].setSrc("pieces/white/queen.svg")
-    _pieceMatrix[7][5].setSrc("pieces/white/bishop.svg")
-    _pieceMatrix[7][6].setSrc("pieces/white/knight.svg")
-    _pieceMatrix[7][7].setSrc("pieces/white/rook.svg")
+    let startPosWhite = 7
+    let startPosBlack = 0
+
+    for (let j = 0; j < 8; j++) {
+        _pieceMatrix[startPosWhite][j].setSrc("pieces/white/" + pieces[j] + ".svg")
+        _pieceMatrix[startPosBlack][j].setSrc("pieces/black/" + pieces[j] + ".svg")
+    }
 }
 
 function onClick(clicked: Piece) {
@@ -105,7 +95,7 @@ function onClick(clicked: Piece) {
         target = clicked
         switch (_selected.rank) {
             case "pawn":
-                canMove = handlePawn(_selected, target)
+                canMove = handlePawn(_selected, target, _pieceMatrix)
                 if (canMove) {
                     //handle queen res
                     let queen = "pieces/white/queen.svg"
@@ -139,7 +129,6 @@ function onClick(clicked: Piece) {
             case "king":
                 canMove = (handleBishop(_selected, target, _pieceMatrix) || handleRook(_selected, target, _pieceMatrix))
                 break
-
         }
 
         if (canMove) {
@@ -156,16 +145,22 @@ function makeMove(p: Piece) {
         if (target == _selected) {
             return
         }
-        target.img.src = _selected.img.src
-        target.rank = _selected.rank
-        _selected.rank = ""
-        target.white = _selected.white
-        _selected.white = false
-        _selected.img.removeAttribute("src")
+        if (_whiteToMove == _selected.white) {
+
+            target.img.src = _selected.img.src
+            target.rank = _selected.rank
+            _selected.rank = ""
+            target.white = _selected.white
+            _selected.white = false
+            _selected.img.removeAttribute("src")
+            _whiteToMove = !_whiteToMove
+        } else {
+            console.log("Not your turn")
+        }
     }
 }
 
-function handlePawn(select: Piece, target: Piece): boolean {
+function handlePawn(select: Piece, target: Piece, matrix: Piece[][]): boolean {
     let startI = 6
     let offsetI = -1
     if (!select.white) {
@@ -175,7 +170,9 @@ function handlePawn(select: Piece, target: Piece): boolean {
     //move
     if (target.img.src == "") {
         if (select.i == startI && select.i + 2 * offsetI == target.i && select.j == target.j) {
-            return true
+            if (matrix[select.i + offsetI][select.j].rank == "") {
+                return true
+            }
         }
         if (select.i + offsetI == target.i && select.j == target.j) {
             return true
