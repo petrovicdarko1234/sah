@@ -118,6 +118,8 @@ function onClick(clicked: Piece) {
                     if (target.i == queenRes) {
                         target.setSrc(queen)
                         _selected.img.removeAttribute("src")
+                        _selected.rank = ""
+                        _selected.white = false
                         canMove = false
                     }
                 }
@@ -129,10 +131,11 @@ function onClick(clicked: Piece) {
                 //code
                 break
             case "bishop":
-                //code
+                canMove = handleBishop(_selected, target, _pieceMatrix)
                 break
             case "queen":
-                //code
+                canMove = (handleBishop(_selected, target, _pieceMatrix) || handleRook(_selected, target, _pieceMatrix))
+
                 break
             case "king":
                 //code
@@ -226,20 +229,17 @@ function handleRook(selected: Piece, target: Piece, matrix: Piece[][]): boolean 
         curJ = curJ + offsetJ
 
         if (curJ > 7 || curJ < 0) {
-            console.log("I je:", curI, "J je:", curJ)
+            console.log("problem s J se desio")
             break
         }
         if (curI > 7 || curI < 0) {
-            console.log("I je:", curI, "J je:", curJ)
+            console.log("problem s I se desio")
             break
         }
         if (curI == target.i && curJ == target.j) {
             break
         }
         if (matrix[curI][curJ].rank != "") {
-            console.log("puca na poziciji:", matrix[curI][curJ])
-            console.log(target)
-            console.log(selected)
             return false
         }
 
@@ -248,7 +248,61 @@ function handleRook(selected: Piece, target: Piece, matrix: Piece[][]): boolean 
     if (selected.i == target.i || selected.j == target.j) {
         return true
     }
-    console.log(selected.i, selected.j, "razmak", target.i, target.j)
+    return false
+}
+
+function handleBishop(selected: Piece, target: Piece, matrix: Piece[][]): boolean {
+    let difI = selected.i - target.i
+    let difJ = selected.j - target.j
+
+    if (target.rank != "" && selected.white == target.white) {
+        return false
+    }
+
+    let offsetI = 0
+    let offsetJ = 0
+
+    if (difI < 0 && difJ < 0) {
+        offsetI = 1
+        offsetJ = 1
+    }
+    if (difI < 0 && difJ > 0) {
+        offsetI = 1
+        offsetJ = -1
+    }
+    if (difI > 0 && difJ > 0) {
+        offsetI = -1
+        offsetJ = -1
+    }
+    if (difI > 0 && difJ < 0) {
+        offsetI = -1
+        offsetJ = 1
+    }
+
+    let curI = selected.i
+    let curJ = selected.j
+
+    while (true) {
+        curI = curI + offsetI
+        curJ = curJ + offsetJ
+
+        if (curJ > 7 || curJ < 0) {
+            break
+        }
+        if (curI > 7 || curI < 0) {
+            break
+        }
+        if (curI == target.i && curJ == target.j) {
+            break
+        }
+        if (matrix[curI][curJ].rank != "") {
+            return false
+        }
+    }
+
+    if (Math.abs(selected.i - target.i) == Math.abs(selected.j - target.j)) {
+        return true
+    }
     return false
 }
 
