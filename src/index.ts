@@ -29,11 +29,12 @@ class Piece {
         }
     }
 }
-let pieces = ["rook", "knight", "bishop", "king", "queen", "bishop", "knight", "rook"]
-let _selected: Piece | null = null
-let _pieceMatrix: Piece[][] = []
+const _pieces = ["rook", "knight", "bishop", "king", "queen", "bishop", "knight", "rook"]
 const captureAudio = new Audio("capture.mp3")
 const moveAudio = new Audio("move-self.mp3")
+
+let _selected: Piece | null = null
+let _pieceMatrix: Piece[][] = []
 let _whiteToMove = true
 
 function drawBoard() {
@@ -60,7 +61,7 @@ function drawBoard() {
         }
     }
     drawPawns()
-    drawPieces(pieces)
+    drawPieces(_pieces)
 }
 
 function drawPawns() {
@@ -73,7 +74,6 @@ function drawPawns() {
     }
 }
 function drawPieces(pieces: string[]) {
-
     let startPosWhite = 7
     let startPosBlack = 0
 
@@ -85,20 +85,22 @@ function drawPieces(pieces: string[]) {
 
 function onClick(clicked: Piece) {
     let canMove = false
-    let target = null
+
     if (_selected == null) {
         if (_whiteToMove != clicked.white) {
             return
         }
-        else {
-            if (clicked.img.src != "") {
-                _selected = clicked
-                _selected.img.classList.add("selected")
-            }
+        if (clicked.img.src != "") {
+            _selected = clicked
+            _selected.img.classList.add("selected")
         }
-    }
-    else {
-        target = clicked
+    } else {
+        let target = clicked
+        if (target.rank != "" && _selected.white == target.white) {
+            _selected.img.classList.remove("selected")
+            _selected = null
+            return
+        }
         switch (_selected.rank) {
             case "pawn":
                 canMove = handlePawn(_selected, target, _pieceMatrix)
@@ -132,42 +134,37 @@ function onClick(clicked: Piece) {
                 canMove = handleBishop(_selected, target, _pieceMatrix)
                 break
             case "queen":
-                canMove = (handleBishop(_selected, target, _pieceMatrix) || handleRook(_selected, target, _pieceMatrix))
-                break
             case "king":
-                canMove = (handleBishop(_selected, target, _pieceMatrix) || handleRook(_selected, target, _pieceMatrix))
+                canMove = handleBishop(_selected, target, _pieceMatrix)
+                    || handleRook(_selected, target, _pieceMatrix)
                 break
         }
 
         if (canMove) {
-            makeMove(target)
+            makeMove(_selected, target)
             _whiteToMove = !_whiteToMove
         }
         _selected.img.classList.remove("selected")
         _selected = null
-        canMove = false
     }
 }
-function makeMove(p: Piece) {
-    if (_selected != null) {
-        let target = p
-        if (target == _selected) {
-            return
-        }
-        if (target.rank == "") {
-            resetAudio()
-            moveAudio.play()
-        } else {
-            resetAudio()
-            captureAudio.play()
-        }
-        target.img.src = _selected.img.src
-        target.rank = _selected.rank
-        _selected.rank = ""
-        target.white = _selected.white
-        _selected.white = false
-        _selected.img.removeAttribute("src")
+function makeMove(select: Piece, target: Piece) {
+    if (target == select) {
+        return
     }
+    resetAudio()
+    if (target.rank == "") {
+        moveAudio.play()
+    } else {
+        captureAudio.play()
+    }
+    target.img.src = select.img.src
+    target.rank = select.rank
+    select.rank = ""
+    target.white = select.white
+    select.white = false
+    select.img.removeAttribute("src")
+
 }
 
 function handlePawn(select: Piece, target: Piece, matrix: Piece[][]): boolean {
@@ -187,11 +184,7 @@ function handlePawn(select: Piece, target: Piece, matrix: Piece[][]): boolean {
         if (select.i + offsetI == target.i && select.j == target.j) {
             return true
         }
-
     } else { //take
-        if (select.white == target.white) {
-            return false
-        }
         if (select.i + offsetI == target.i && select.j + 1 == target.j) {
             return true
         }
@@ -202,25 +195,17 @@ function handlePawn(select: Piece, target: Piece, matrix: Piece[][]): boolean {
     return false
 }
 function handleRook(selected: Piece, target: Piece, matrix: Piece[][]): boolean {
-
-
-    if (target.rank != "" && selected.white == target.white) {
-        return false
-    }
-
     let difI = selected.i - target.i
     let difJ = selected.j - target.j
 
     if (selected.rank == "king") {
-        if (Math.abs(selected.i - target.i) > 1 || Math.abs(selected.j - target.j) > 1) {
-            console.log("uslov za kralja kod topovu funkciju")
+        if (Math.abs(difI) > 1 || Math.abs(difJ) > 1) {
             return false
         }
     }
 
     let offsetI = 0
     let offsetJ = 0
-
     if (difI > 0) {
         offsetI = -1
         offsetJ = 0
@@ -234,6 +219,7 @@ function handleRook(selected: Piece, target: Piece, matrix: Piece[][]): boolean 
         offsetI = 0
         offsetJ = 1
     }
+
     let curI = selected.i
     let curJ = selected.j
     while (true) {
@@ -250,7 +236,6 @@ function handleRook(selected: Piece, target: Piece, matrix: Piece[][]): boolean 
             break
         }
         if (matrix[curI][curJ].rank != "") {
-            console.log("ima nesto ispred kod topa")
             return false
         }
     }
@@ -258,7 +243,6 @@ function handleRook(selected: Piece, target: Piece, matrix: Piece[][]): boolean 
     if (selected.i == target.i || selected.j == target.j) {
         return true
     }
-    console.log("kraj od topovu funkciju")
     return false
 }
 
@@ -266,19 +250,14 @@ function handleBishop(selected: Piece, target: Piece, matrix: Piece[][]): boolea
     let difI = selected.i - target.i
     let difJ = selected.j - target.j
 
-    if (target.rank != "" && selected.white == target.white) {
-        return false
-    }
-
     if (selected.rank == "king") {
-        if (Math.abs(selected.i - target.i) != 1 || Math.abs(selected.j - target.j) != 1) {
+        if (Math.abs(difI) != 1 || Math.abs(difJ) != 1) {
             return false
         }
     }
 
     let offsetI = 0
     let offsetJ = 0
-
     if (difI < 0 && difJ < 0) {
         offsetI = 1
         offsetJ = 1
@@ -298,7 +277,6 @@ function handleBishop(selected: Piece, target: Piece, matrix: Piece[][]): boolea
 
     let curI = selected.i
     let curJ = selected.j
-
     while (true) {
         curI = curI + offsetI
         curJ = curJ + offsetJ
@@ -317,7 +295,7 @@ function handleBishop(selected: Piece, target: Piece, matrix: Piece[][]): boolea
         }
     }
 
-    if (Math.abs(selected.i - target.i) == Math.abs(selected.j - target.j)) {
+    if (Math.abs(difI) == Math.abs(difJ)) {
         return true
     }
     return false
@@ -325,10 +303,6 @@ function handleBishop(selected: Piece, target: Piece, matrix: Piece[][]): boolea
 function handleKnight(selected: Piece, target: Piece): boolean {
     let difI = Math.abs(selected.i - target.i)
     let difJ = Math.abs(selected.j - target.j)
-
-    if (target.rank != "" && selected.white == target.white) {
-        return false
-    }
 
     if ((difI == 2 && difJ == 1) || (difI == 1 && difJ == 2)) {
         return true
