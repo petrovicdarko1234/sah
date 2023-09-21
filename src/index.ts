@@ -4,12 +4,14 @@ class Piece {
     j: number
     rank: string
     white: boolean = false
+    pMoves: Piece[]
 
     constructor(img: HTMLImageElement, i: number, j: number) {
         this.img = img
         this.i = i
         this.j = j
         this.rank = ""
+        this.pMoves = []
     }
     setSrc(source: string) {
         this.img.src = source
@@ -51,6 +53,7 @@ function drawBoard() {
             } else {
                 img.className = "gridWhite"
             }
+            img.draggable = false
             img.id = i + '_' + j
             _pieceMatrix[i][j] = new Piece(img, i, j)
             board.appendChild(img)
@@ -85,7 +88,9 @@ function drawPieces(pieces: string[]) {
 
 function onClick(clicked: Piece) {
     let canMove = false
+    calcMoves(_pieceMatrix)
 
+    console.log("potezi za topa su:", _pieceMatrix[0][0].pMoves)
     if (_selected == null) {
         if (_whiteToMove != clicked.white) {
             return
@@ -93,60 +98,80 @@ function onClick(clicked: Piece) {
         if (clicked.img.src != "") {
             _selected = clicked
             _selected.img.classList.add("selected")
+            for (let i = 0; i < _selected.pMoves.length; i++) {
+                _selected.pMoves[i].img.classList.add("posibleMoves")
+            }
         }
     } else {
+        for (let i = 0; i < _selected.pMoves.length; i++) {
+            _selected.pMoves[i].img.classList.remove("posibleMoves")
+        }
         let target = clicked
         if (target.rank != "" && _selected.white == target.white) {
             _selected.img.classList.remove("selected")
             _selected = null
             return
         }
-        switch (_selected.rank) {
-            case "pawn":
-                canMove = handlePawn(_selected, target, _pieceMatrix)
-                if (canMove) {
-                    let queen = "pieces/white/queen.svg"
-                    let queenRes = 0
-
-                    if (!_selected.white) {
-                        queenRes = 7
-                        queen = "pieces/black/queen.svg"
-                    }
-
-                    if (target.i == queenRes) {
-                        target.setSrc(queen)
-                        _selected.img.removeAttribute("src")
-                        _selected.rank = ""
-                        canMove = false
-                        resetAudio()
-                        captureAudio.play()
-                        _whiteToMove = !_whiteToMove
-                    }
-                }
-                break
-            case "rook":
-                canMove = handleRook(_selected, target, _pieceMatrix)
-                break
-            case "knight":
-                canMove = handleKnight(_selected, target)
-                break
-            case "bishop":
-                canMove = handleBishop(_selected, target, _pieceMatrix)
-                break
-            case "queen":
-            case "king":
-                canMove = handleBishop(_selected, target, _pieceMatrix)
-                    || handleRook(_selected, target, _pieceMatrix)
-                break
-        }
-
+        canMove = canMoveFunc(_selected, target, _pieceMatrix)
         if (canMove) {
-            makeMove(_selected, target)
+            if (_selected.rank == "pawn") {
+                let queen = "pieces/white/queen.svg"
+                let queenRes = 0
+
+                if (!_selected.white) {
+                    queenRes = 7
+                    queen = "pieces/black/queen.svg"
+                }
+
+                if (target.i == queenRes) {
+                    target.setSrc(queen)
+                    _selected.img.removeAttribute("src")
+                    _selected.rank = ""
+                    canMove = false
+                    resetAudio()
+                    captureAudio.play()
+                } else {
+                    makeMove(_selected, target)
+                }
+            } else {
+                makeMove(_selected, target)
+            }
             _whiteToMove = !_whiteToMove
         }
         _selected.img.classList.remove("selected")
         _selected = null
     }
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            _pieceMatrix[i][j].pMoves = []
+        }
+    }
+}
+function canMoveFunc(_selected: Piece, target: Piece, _pieceMatrix: Piece[][]): boolean {
+    let canMove = false
+    if (target.rank != "" && _selected.white == target.white) {
+        return false
+    }
+    switch (_selected.rank) {
+        case "pawn":
+            canMove = handlePawn(_selected, target, _pieceMatrix)
+            break
+        case "rook":
+            canMove = handleRook(_selected, target, _pieceMatrix)
+            break
+        case "knight":
+            canMove = handleKnight(_selected, target)
+            break
+        case "bishop":
+            canMove = handleBishop(_selected, target, _pieceMatrix)
+            break
+        case "queen":
+        case "king":
+            canMove = handleBishop(_selected, target, _pieceMatrix)
+                || handleRook(_selected, target, _pieceMatrix)
+            break
+    }
+    return canMove
 }
 function makeMove(select: Piece, target: Piece) {
     if (target == select) {
@@ -314,4 +339,17 @@ function resetAudio() {
     moveAudio.currentTime = 0;
     captureAudio.pause();
     captureAudio.currentTime = 0;
+}
+function calcMoves(matrix: Piece[][]) {
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            for (let k = 0; k < 8; k++) {
+                for (let p = 0; p < 8; p++) {
+                    if (canMoveFunc(_pieceMatrix[i][j], _pieceMatrix[k][p], matrix)) {
+                        _pieceMatrix[i][j].pMoves.push(_pieceMatrix[k][p])
+                    }
+                }
+            }
+        }
+    }
 }
