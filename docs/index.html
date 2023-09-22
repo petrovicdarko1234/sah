@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sah</title>
+    <script src="lib\index.js"></script>
+</head>
+
+<body onload="drawBoard()">
+    <div id="Board" style="height: 400px;width: 400px;"></div>
+</body>
+
+</html>
+<style>
+    .gridWhite {
+        width: 12.5%;
+        height: 12.5%;
+        float: left;
+        background-color: #EEEED2;
+    }
+
+    .gridBlack {
+        width: 12.5%;
+        height: 12.5%;
+        float: left;
+        background-color: #769656;
+    }
+
+    .selected {
+        background-color: rgb(64, 64, 214);
+    }
+
+    .posibleMoves {
+        background-color: rgb(111, 111, 218);
+    }
+</style>

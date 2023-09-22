@@ -90,7 +90,6 @@ function onClick(clicked: Piece) {
     let canMove = false
     calcMoves(_pieceMatrix)
 
-    console.log("potezi za topa su:", _pieceMatrix[0][0].pMoves)
     if (_selected == null) {
         if (_whiteToMove != clicked.white) {
             return
